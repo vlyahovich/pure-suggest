@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Suggest component",
   "main": "dist/extension.js",
-  "esnext:main": "src/extension.ts",
+  "esnext:main": "src/extension/extension.ts",
   "scripts": {
     "watch": "./node_modules/.bin/webpack --watch --mode=development",
     "build": "./node_modules/.bin/webpack --mode=production",
