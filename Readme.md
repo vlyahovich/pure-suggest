@@ -49,6 +49,10 @@ Plugin can be supplied bu some initial data which will be passed to `SuggestSour
 
 Plugin uses `Promise` and `Array.prototype.find` so if you need some older browsers support you can inlude `dist/polyfills.js` or `src/extension/polyfills.ts` for `esnext` projects.
 
+## Additional features
+
+In `src/demo/UsersSuggestSource.ts` you can find example of how to correct mistakes in typed text by user to filter results better, e. g. `,jhbc` (wrong keyboard layout), `boris` (translit), `ищкшы` (translit wrong keyboard layout) will correctly find `Борис`.
+
 ## Development
 
 Run `npm run watch` for a dev files watcher to rebuild files on change.
