@@ -32,14 +32,18 @@ class User
 
     public function search($term)
     {
-        $query = "SELECT * FROM " . $this->table_name . " WHERE (name REGEXP ?) OR (domain LIKE ?) LIMIT 10;";
+        $query = "SELECT * FROM " . $this->table_name . " WHERE (LOWER(name) REGEXP ?) OR (LOWER(domain) LIKE ?) LIMIT 10;";
 
         $stmt = $this->conn->prepare($query);
 
         $term = htmlspecialchars(strip_tags($term));
         $term = trim($term);
+        $term = mb_strtolower($term);
+
         $variants = getSearchVariants($term);
+
         $regexpTerm = join("|", $variants);
+        $term = "%{$term}%";
 
         $stmt->bindParam(1, $regexpTerm);
         $stmt->bindParam(2, $term);
