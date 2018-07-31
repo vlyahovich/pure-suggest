@@ -2,9 +2,9 @@
 
 Suggest plugin written on vanilla js.
 
-![Alt text](/misc/screenshot1.png?raw=true "single select")
-
-![Alt text](/misc/screenshot2.png?raw=true "multi select")
+Single Select                                               | Multip Select
+----------------------------------------------------------- | ---------------------------------------------------------
+![Alt text](/misc/screenshot1.png?raw=true "single select") | ![Alt text](/misc/screenshot2.png?raw=true "multi select")
 
 Technologies:
 
