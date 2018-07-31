@@ -26,6 +26,7 @@ const MENU = 'suggest__menu';
 const MENU_WRAP = 'suggest__menu-wrap';
 const ITEM = 'suggest-item';
 const ITEM_IMAGE = 'suggest-item__image';
+const ITEM_IMAGE_LOADED = 'suggest-item__image_loaded';
 const ITEM_TITLE = 'suggest-item__title';
 const ITEM_SUBTITLE = 'suggest-item__subtitle';
 const BUBBLES = 'suggest__bubbles';
@@ -439,7 +440,8 @@ export class PureSuggest extends EventEmitter {
 
         if (!this.options.hideAvatar) {
             let imageWrapEl = document.createElement('div'),
-                imageEl = document.createElement('img');
+                imageEl = document.createElement('img'),
+                image = new Image();
 
             imageEl.setAttribute('src', item.image);
             imageEl.setAttribute('alt', item.title);
@@ -448,6 +450,10 @@ export class PureSuggest extends EventEmitter {
 
             imageWrapEl.appendChild(imageEl);
             menuItemEl.appendChild(imageWrapEl);
+
+            // load actual image
+            image.onload = () => imageWrapEl.classList.add(ITEM_IMAGE_LOADED);
+            image.src = item.image;
         }
 
         menuItemEl.className = ITEM;
