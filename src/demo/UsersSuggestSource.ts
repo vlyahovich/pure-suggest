@@ -18,7 +18,7 @@ export class UsersSuggestSource extends SuggestSource {
     fetch(term: string): Promise<Dict[]> {
         return xhrRequest({
             method: 'GET',
-            url: '/pure-suggest/api/user/hint.php',
+            url: window.__HOST + '/api/user/hint.php',
             params: {
                 q: term
             }
