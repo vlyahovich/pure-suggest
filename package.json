@@ -12,6 +12,9 @@
   "keywords": [
     "suggest"
   ],
+  "engines": {
+    "node": "v10.6.0"
+  },
   "author": "Vadim Liakhovich <v.liakhovich@yandex.ru> (https://github.com/vlyahovich)",
   "license": "ISC",
   "devDependencies": {
