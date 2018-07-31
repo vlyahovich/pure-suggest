@@ -1,4 +1,4 @@
-import {PureSuggest} from "../extension/extension";
+import {PureSuggest} from '../extension/extension';
 import {UsersSuggestSource} from './UsersSuggestSource';
 
 document.addEventListener('DOMContentLoaded', function () {
