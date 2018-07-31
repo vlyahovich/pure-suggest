@@ -1,12 +1,10 @@
 const path = require('path');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const CompressionPlugin = require('compression-webpack-plugin');
-
-const PRODUCTION = 'production';
 
 module.exports = function (env, argv) {
-    let {mode} = argv;
+    let {mode} = argv,
+        isProduction = mode === 'production';
 
     return {
         entry: {
@@ -53,10 +51,7 @@ module.exports = function (env, argv) {
         },
         plugins: [
             new CleanWebpackPlugin('dist'),
-            new ExtractTextPlugin('extension.css'),
-            ...(mode === PRODUCTION ? [
-                new CompressionPlugin({})
-            ] : [])
+            new ExtractTextPlugin('extension.css')
         ]
     }
 };
