@@ -32,14 +32,17 @@ header("Expires: " . gmdate("D, d M Y H:i:s", time() + 60 * 60 * 24) . " GMT");
     <h1>Suggest demos</h1>
 
     <div class="suggest suggest_default">
+        <div class="suggest__toggle"></div>
         <input class="suggest__input" type="text" placeholder="Enter the name (default)">
     </div>
 
     <div class="suggest suggest_text">
+        <div class="suggest__toggle"></div>
         <input class="suggest__input" type="text" placeholder="Enter the name (no avatar)">
     </div>
 
     <div class="suggest suggest_multi">
+        <div class="suggest__toggle"></div>
         <input class="suggest__input" type="text" placeholder="Enter the name (multi)">
     </div>
 

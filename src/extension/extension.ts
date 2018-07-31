@@ -1,7 +1,8 @@
 import {SuggestItem} from './interfaces';
 import {SuggestSource} from './SuggestSource';
-import {EventEmitter} from './util/EventEmitter';
+import {EventEmitter} from './EventEmitter';
 import {debounce} from './util/debounce';
+import {bind} from './util/bindDecorator';
 import {KEYS} from './enums';
 
 import './extension.less';
@@ -13,8 +14,25 @@ export interface ExtensionOptions {
     createSource: (initialData?: any[]) => SuggestSource
 }
 
+const USER_NOT_FOUND = 'User not found';
+const ADD = 'Add';
 const FOCUSED = 'suggest_focused';
+const FILLED = 'suggest_filled';
+const INPUT = 'suggest__input';
+const TOGGLE = 'suggest__toggle';
 const ITEM_HOVERED = 'suggest-item_hovered';
+const NOT_FOUND = 'suggest__not-found';
+const MENU = 'suggest__menu';
+const MENU_WRAP = 'suggest__menu-wrap';
+const ITEM = 'suggest-item';
+const ITEM_IMAGE = 'suggest-item__image';
+const ITEM_TITLE = 'suggest-item__title';
+const ITEM_SUBTITLE = 'suggest-item__subtitle';
+const BUBBLES = 'suggest__bubbles';
+const BUBBLES_ADD = 'suggest__add';
+const BUBBLE = 'suggest-bubble';
+const BUBBLE_TEXT = 'suggest-bubble__text';
+const BUBBLE_CLOSE = 'suggest-bubble__close';
 const SEARCH_DEBOUNCE = 250;
 
 export class PureSuggest extends EventEmitter {
@@ -22,6 +40,8 @@ export class PureSuggest extends EventEmitter {
     protected input: HTMLInputElement;
     protected suggestSource: SuggestSource;
     protected focused: boolean = false;
+    protected toggle: boolean = false;
+    protected toggleEl?: HTMLDivElement;
     protected menuWrapEl?: HTMLDivElement;
     protected menuEl?: HTMLDivElement;
     protected menuItems?: HTMLDivElement[];
@@ -31,10 +51,14 @@ export class PureSuggest extends EventEmitter {
     protected index: number = 0;
     protected options: ExtensionOptions;
     protected value: SuggestItem[] = [];
-    protected doImmSearch: Function;
+    protected doDelayedSearch: () => any;
 
     constructor(el: HTMLDivElement, options: ExtensionOptions) {
         super();
+
+        if (!el) {
+            throw new Error('element is required');
+        }
 
         if (!options || !options.createSource) {
             throw new Error('createSource is required');
@@ -42,34 +66,70 @@ export class PureSuggest extends EventEmitter {
 
         // init
         this.el = el;
-        this.input = this.el.querySelector('.suggest__input');
+        this.input = this.el.querySelector('.' + INPUT);
+        this.toggleEl = this.el.querySelector('.' + TOGGLE);
         this.suggestSource = options.createSource(options.initialData);
         this.options = options;
 
-        // bindings
-        this.handleSelfClick = this.handleSelfClick.bind(this);
-        this.handleKeyDown = this.handleKeyDown.bind(this);
-        this.handleFocus = this.handleFocus.bind(this);
-        this.handleBlur = this.handleBlur.bind(this);
-        this.doImmSearch = this.doSearch.bind(this);
-        this.doSearch = debounce(this.doImmSearch, SEARCH_DEBOUNCE);
-        this.handleItemClick = this.handleItemClick.bind(this);
-        this.handleItemMove = this.handleItemMove.bind(this);
-        this.handleBubbleClose = this.handleBubbleClose.bind(this);
-        this.handleBubbleClose = this.handleBubbleClose.bind(this);
+        // util
+        this.doDelayedSearch = debounce(this.doSearch, SEARCH_DEBOUNCE);
 
         // listeners
-        this.el.addEventListener('click', this.handleSelfClick);
+        this.el.addEventListener('mousedown', this.handleMouseDown);
+        this.el.addEventListener('click', this.handleClick);
         this.input.addEventListener('keydown', this.handleKeyDown);
-        this.input.addEventListener('input', this.doSearch);
+        this.input.addEventListener('input', this.doDelayedSearch);
         this.input.addEventListener('focus', this.handleFocus);
         this.input.addEventListener('blur', this.handleBlur);
     }
 
     /**
-     * Hnndle click on element itself to focus back
+     * Init some elements if needed
      */
-    handleSelfClick() {
+    initElements() {
+        // in case we need to create input by extension
+        if (!this.input) {
+            this.input = document.createElement('input');
+
+            this.input.className = INPUT;
+
+            // element can be filled with some additional nodes, clear it
+            this.el.innerHTML = '';
+            this.el.appendChild(this.input);
+        }
+
+        // in case we need to create toggle by extension
+        if (!this.toggleEl) {
+            this.toggleEl = document.createElement('div');
+
+            this.toggleEl.className = TOGGLE;
+
+            this.el.insertBefore(this.toggleEl, this.input);
+        }
+    }
+
+    /**
+     * Handle mousedown for proper toggle behaviour
+     */
+    @bind
+    handleMouseDown() {
+        if (this.focused) {
+            this.toggle = true;
+        }
+    }
+
+    /**
+     * Handle click on element itself to focus back
+     */
+    @bind
+    handleClick(event: Event) {
+        // just let input blur if toggle happened
+        if (event.target === this.toggleEl && this.toggle) {
+            this.toggle = false;
+
+            return;
+        }
+
         if (this.options.multi) {
             this.input.style.display = '';
         }
@@ -80,6 +140,7 @@ export class PureSuggest extends EventEmitter {
     /**
      * Handle command keys
      */
+    @bind
     handleKeyDown(event: KeyboardEvent) {
         let key = event.which || event.keyCode;
 
@@ -101,6 +162,7 @@ export class PureSuggest extends EventEmitter {
     /**
      * Focus state
      */
+    @bind
     handleFocus() {
         this.focused = true;
 
@@ -110,7 +172,7 @@ export class PureSuggest extends EventEmitter {
             this.addEl.style.display = 'none';
         }
 
-        this.doImmSearch();
+        this.doSearch();
 
         this.trigger('focus');
     }
@@ -118,12 +180,14 @@ export class PureSuggest extends EventEmitter {
     /**
      * Blur state
      */
+    @bind
     handleBlur() {
         this.focused = false;
 
         this.el.classList.remove(FOCUSED);
 
-        if (this.options.multi) {
+        // toggle input and add element visibilities for multi-select
+        if (this.options.multi && !this.input.value) {
             if (this.value.length) {
                 this.input.style.display = 'none';
             } else {
@@ -168,7 +232,7 @@ export class PureSuggest extends EventEmitter {
      * Handle KEYS.ENTER key
      */
     handleSelect() {
-        if (!this.menuItems) {
+        if (!this.menuItems || !this.focused) {
             return;
         }
 
@@ -219,6 +283,7 @@ export class PureSuggest extends EventEmitter {
     /**
      * Search from suggest source
      */
+    @bind
     doSearch() {
         this.suggestSource
             .search(this.getInputValue(), this.options.multi ? this.value : [])
@@ -228,6 +293,7 @@ export class PureSuggest extends EventEmitter {
     /**
      * Handle click on item in menu
      */
+    @bind
     handleItemClick(event: Event) {
         let item = this.findDataItem(event.target as Element) as HTMLDivElement;
 
@@ -243,6 +309,7 @@ export class PureSuggest extends EventEmitter {
     /**
      * Handle item mouse move
      */
+    @bind
     handleItemMove(event: Event) {
         let item = this.findDataItem(event.target as Element) as HTMLDivElement;
 
@@ -254,12 +321,13 @@ export class PureSuggest extends EventEmitter {
     /**
      * Handle close button click on bubble
      */
+    @bind
     handleBubbleClose(event: Event) {
         let target = event.target as Element;
 
         event.stopPropagation();
 
-        if (target.className === 'suggest-bubble__close') {
+        if (target.className === BUBBLE_CLOSE) {
             let item = this.findDataItem(event.target as Element) as HTMLDivElement;
 
             if (item) {
@@ -271,6 +339,7 @@ export class PureSuggest extends EventEmitter {
     /**
      * Stop events on bubble click
      */
+    @bind
     handleBubbleClick(event: Event) {
         event.stopPropagation();
     }
@@ -315,22 +384,7 @@ export class PureSuggest extends EventEmitter {
         this.menuItems = [];
         this.suggestItems = items;
 
-        if (this.menuEl) {
-            this.menuEl.innerHTML = '';
-            this.menuEl.style.display = '';
-        } else {
-            this.menuWrapEl = document.createElement('div');
-            this.menuEl = document.createElement('div');
-
-            this.menuWrapEl.className = 'suggest__menu-wrap';
-            this.menuEl.className = 'suggest__menu';
-
-            this.el.appendChild(this.menuWrapEl);
-            this.menuWrapEl.appendChild(this.menuEl);
-
-            this.menuEl.addEventListener('mousedown', this.handleItemClick);
-            this.menuEl.addEventListener('mousemove', this.handleItemMove);
-        }
+        this.createMenu();
 
         if (items.length) {
             let fragment = document.createDocumentFragment();
@@ -345,10 +399,32 @@ export class PureSuggest extends EventEmitter {
         } else {
             let notFoundEl = document.createElement('div');
 
-            notFoundEl.className = 'suggest__not-found';
-            notFoundEl.textContent = 'User not found';
+            notFoundEl.className = NOT_FOUND;
+            notFoundEl.textContent = USER_NOT_FOUND;
 
             this.menuEl.appendChild(notFoundEl);
+        }
+    }
+
+    /**
+     * Create or update menu element
+     */
+    createMenu() {
+        if (this.menuEl) {
+            this.menuEl.innerHTML = '';
+            this.menuEl.style.display = '';
+        } else {
+            this.menuWrapEl = document.createElement('div');
+            this.menuEl = document.createElement('div');
+
+            this.menuWrapEl.className = MENU_WRAP;
+            this.menuEl.className = MENU;
+
+            this.el.appendChild(this.menuWrapEl);
+            this.menuWrapEl.appendChild(this.menuEl);
+
+            this.menuEl.addEventListener('mousedown', this.handleItemClick);
+            this.menuEl.addEventListener('mousemove', this.handleItemMove);
         }
     }
 
@@ -368,15 +444,15 @@ export class PureSuggest extends EventEmitter {
             imageEl.setAttribute('src', item.image);
             imageEl.setAttribute('alt', item.title);
 
-            imageWrapEl.className = 'suggest-item__image';
+            imageWrapEl.className = ITEM_IMAGE;
 
             imageWrapEl.appendChild(imageEl);
             menuItemEl.appendChild(imageWrapEl);
         }
 
-        menuItemEl.className = 'suggest-item';
-        titleEl.className = 'suggest-item__title';
-        subtitleEl.className = 'suggest-item__subtitle';
+        menuItemEl.className = ITEM;
+        titleEl.className = ITEM_TITLE;
+        subtitleEl.className = ITEM_SUBTITLE;
 
         if (highlight.length <= 1) {
             titleEl.textContent = item.title;
@@ -427,10 +503,10 @@ export class PureSuggest extends EventEmitter {
             this.bubblesEl = document.createElement('div');
             this.addEl = document.createElement('div');
 
-            this.bubblesEl.className = 'suggest__bubbles';
-            this.addEl.className = 'suggest__add';
+            this.bubblesEl.className = BUBBLES;
+            this.addEl.className = BUBBLES_ADD;
 
-            this.addEl.textContent = 'Add';
+            this.addEl.textContent = ADD;
 
             this.el.insertBefore(this.bubblesEl, this.input);
             this.el.insertBefore(this.addEl, this.input);
@@ -443,9 +519,9 @@ export class PureSuggest extends EventEmitter {
             bubbleTextEl = document.createElement('div'),
             bubbleCloseEl = document.createElement('div');
 
-        bubbleEl.className = 'suggest-bubble';
-        bubbleTextEl.className = 'suggest-bubble__text';
-        bubbleCloseEl.className = 'suggest-bubble__close';
+        bubbleEl.className = BUBBLE;
+        bubbleTextEl.className = BUBBLE_TEXT;
+        bubbleCloseEl.className = BUBBLE_CLOSE;
 
         bubbleEl.setAttribute('data-id', item.id);
 
@@ -455,7 +531,7 @@ export class PureSuggest extends EventEmitter {
         bubbleEl.appendChild(bubbleCloseEl);
         this.bubblesEl.appendChild(bubbleEl);
 
-        this.el.classList.add('suggest_filled');
+        this.el.classList.add(FILLED);
 
         this.trigger('change', this.value.map(({id}) => id));
     }
@@ -472,7 +548,7 @@ export class PureSuggest extends EventEmitter {
             this.value = this.value.filter((item) => item.id !== id);
 
             if (!this.value.length) {
-                this.el.classList.remove('suggest_filled');
+                this.el.classList.remove(FILLED);
 
                 this.input.style.display = '';
             }
@@ -488,9 +564,10 @@ export class PureSuggest extends EventEmitter {
         this.suggestSource = null;
         this.options = null;
 
-        this.el.removeEventListener('click', this.handleSelfClick);
+        this.el.removeEventListener('mousedown', this.handleMouseDown);
+        this.el.removeEventListener('click', this.handleClick);
         this.input.removeEventListener('keydown', this.handleKeyDown);
-        this.input.removeEventListener('input', this.doSearch);
+        this.input.removeEventListener('input', this.doDelayedSearch);
         this.input.removeEventListener('focus', this.handleFocus);
         this.input.removeEventListener('blur', this.handleBlur);
 
@@ -511,5 +588,6 @@ export class PureSuggest extends EventEmitter {
 
         this.el = null;
         this.input = null;
+        this.toggleEl = null;
     }
 }

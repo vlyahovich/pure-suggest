@@ -1,19 +1,18 @@
 .suggest {
+    font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica Neue, sans-serif;
     background: #fff;
     border: 1px solid #d3d9de;
     border-radius: 2px;
     padding: 2px 28px 1px 8px;
     position: relative;
-    font-family: -apple-system, BlinkMacSystemFont, Roboto, Helvetica Neue, sans-serif;
+    user-select: none;
 
-    &:before {
-        content: '';
+    &__toggle {
         background: url('../assets/icons/dropdown_arrow.png') no-repeat 2px 50%;
         width: 21px;
         height: 25px;
         overflow: hidden;
         cursor: pointer;
-        display: block;
         position: absolute;
         right: 0;
         top: 2px;
@@ -207,7 +206,7 @@
 
 @media (-webkit-min-device-pixel-ratio: 2), not all, (min-resolution: 192dpi) {
     .suggest{
-        &:before {
+        &__toggle {
             background-image: url('../assets/icons/dropdown_arrow_2x.png');
             background-size: 11px 7px;
         }

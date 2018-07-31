@@ -84,10 +84,6 @@ export class UsersSuggestSource extends SuggestSource {
         return arr.filter((item) => !values.find((value) => value.id === item[0]));
     }
 
-    find(id: string): any {
-        return this.data.find((item) => item[0] === id);
-    }
-
     highlight(str: string, term: string): string[] {
         if (term.trim()) {
             let strLower = str.toLowerCase(),
