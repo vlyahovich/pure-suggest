@@ -72,6 +72,8 @@ export class PureSuggest extends EventEmitter {
         this.suggestSource = options.createSource(options.initialData);
         this.options = options;
 
+        this.initElements();
+
         // util
         this.doDelayedSearch = debounce(this.doSearch, SEARCH_DEBOUNCE);
 
@@ -438,7 +440,7 @@ export class PureSuggest extends EventEmitter {
             subtitleEl = document.createElement('div'),
             highlight = this.suggestSource.highlight(item.title, term);
 
-        if (!this.options.hideAvatar) {
+        if (!this.options.hideAvatar && item.image) {
             let imageWrapEl = document.createElement('div'),
                 imageEl = document.createElement('img'),
                 image = new Image();
@@ -592,7 +594,9 @@ export class PureSuggest extends EventEmitter {
             this.el.removeChild(this.addEl);
         }
 
-        this.el.removeChild(this.menuWrapEl);
+        if (this.menuWrapEl) {
+            this.el.removeChild(this.menuWrapEl);
+        }
 
         // clear elements linked from outside
         this.el = null;
