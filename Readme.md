@@ -30,6 +30,20 @@ Plugin usage demonstrated in `src/demo/demo.ts` file. First of all you need to c
 
 Then you need to pass an element in which select will be initialized, it should have `suggest` class and preferrably input with `suggest__input` class + div with `suggest__toggle` class to avoid delays while page loads script. Second argument is options which should contain `createSource` method which returns `SuggestSource` instance. Example of usage can be seen in `src/demo` folder.
 
+To listen to plugin events you can subscribe to `change`, `focus` and `blur` events like this:
+
+```javascript
+let suggest = new PureSuggest(document.querySelector('.suggest'), {
+    createSource: (data) => new UsersSuggestSource(data)
+});
+
+suggest.on('change', (value) => console.log(value));
+```
+
+To unsubscribe just invoke `off` on event with subscribed function `suggest.off('change', subscribedFunction)`.
+
+To unbind plugin from elements and listeners you can invoke `destroy` method. This method will clean all listeners and created child elements.
+
 # Highlight usage
 
 `highlight` method of `SuggestSource` is used to highlight text in menu item title. It should return an array of 1, 2 or 3 items in length. Plugin will take middle item as highlight e. g. `['text']` will produce no highlight and `['t', 'ex', 't']` will highlight `ex` part. For array `['te', 'xt']` it will highlight only `xt` part.

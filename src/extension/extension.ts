@@ -567,9 +567,11 @@ export class PureSuggest extends EventEmitter {
      * Cleanup
      */
     destroy() {
+        // clear options
         this.suggestSource = null;
         this.options = null;
 
+        // clear listeners and childs
         this.el.removeEventListener('mousedown', this.handleMouseDown);
         this.el.removeEventListener('click', this.handleClick);
         this.input.removeEventListener('keydown', this.handleKeyDown);
@@ -592,8 +594,12 @@ export class PureSuggest extends EventEmitter {
 
         this.el.removeChild(this.menuWrapEl);
 
+        // clear elements linked from outside
         this.el = null;
         this.input = null;
         this.toggleEl = null;
+
+        // clear events
+        this.events = {};
     }
 }
