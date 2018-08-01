@@ -71,6 +71,10 @@ In `src/demo/UsersSuggestSource.ts` you can find example of how to correct mista
 
 Run `npm run watch` for a dev files watcher to rebuild files on change.
 
+## Tests
+
+Run `npm run test` to execute tests.
+
 ## Build
 
 Run `npm run build` to build the project with production environment.
