@@ -23,6 +23,7 @@
 .suggest_focused {
   border-color: #c9d0d6;
   border-radius: 2px 2px 0 0;
+  z-index: 10;
 }
 .suggest_focused .suggest__menu {
   display: block;
@@ -39,6 +40,9 @@
   padding: 4px 0 7px;
   outline: 0px;
   margin: 0px;
+}
+.suggest__input::-ms-clear {
+  display: none;
 }
 .suggest__menu-wrap {
   position: absolute;

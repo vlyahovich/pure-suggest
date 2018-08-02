@@ -21,6 +21,7 @@
     &_focused {
         border-color: #c9d0d6;
         border-radius: 2px 2px 0 0;
+        z-index: 10;
 
         .suggest__menu {
             display: block;
@@ -42,6 +43,10 @@
         padding: 4px 0 7px;
         outline: 0px;
         margin: 0px;
+
+        &::-ms-clear {
+            display: none;
+        }
     }
 
     &__menu-wrap {
