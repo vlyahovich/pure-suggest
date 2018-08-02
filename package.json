@@ -1,6 +1,6 @@
 {
   "name": "pure-suggest",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Suggest component",
   "main": "dist/extension.js",
   "esnext:main": "src/extension/extension.ts",
