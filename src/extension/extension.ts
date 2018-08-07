@@ -338,15 +338,19 @@ export class PureSuggest extends EventEmitter {
             return;
         }
 
-        let {scrollTop} = this.menuEl;
+        let {scrollTop} = this.menuEl,
+            {value} = this.input;
 
         if (this.menuScrollHeight - scrollTop < SCROLL_THRESHOLD) {
             this.currentRequest = this.suggestSource
                 .nextPage()
                 .then((items) => {
-                    this.addMenu(items);
+                    // make sure input isn't changed and add new items
+                    if (value === this.input.value) {
+                        this.addMenu(items);
 
-                    this.currentRequest = null;
+                        this.currentRequest = null;
+                    }
                 });
         }
     }
