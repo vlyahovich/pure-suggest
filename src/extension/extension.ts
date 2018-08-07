@@ -471,6 +471,7 @@ export class PureSuggest extends EventEmitter {
         if (this.menuEl) {
             this.menuEl.innerHTML = '';
             this.menuEl.style.display = '';
+            this.menuEl.scrollTop = 0;
         } else {
             this.menuWrapEl = document.createElement('div');
             this.menuEl = document.createElement('div');
