@@ -12,6 +12,12 @@ function createTestSource(returns: SuggestItem[] = []) {
         search(term: string) {
             return this.fetch(term).then((data: any) => this.serialize(data));
         },
+        hasNextPage() {
+            return false;
+        },
+        nextPage() {
+            return Promise.resolve([]);
+        },
         highlight(str: string) {
             return [str];
         }

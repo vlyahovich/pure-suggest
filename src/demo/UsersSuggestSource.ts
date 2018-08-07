@@ -3,11 +3,14 @@ import {Dict, SuggestItem} from '../extension/interfaces';
 import {xhrRequest} from '../extension/util/xhrRequest';
 import {getSearchVariants} from '../extension/util/searchVariants';
 
-const SAMPLE_SIZE = 5;
+const PAGE_SIZE = 30;
 
 export class UsersSuggestSource extends SuggestSource {
     private initialData: any[];
     private data: any[];
+    private term: string;
+    private values: SuggestItem[];
+    private page: number;
 
     constructor(initialData?: any[]) {
         super();
@@ -15,18 +18,16 @@ export class UsersSuggestSource extends SuggestSource {
         this.initialData = initialData || [];
     }
 
-    fetch(term: string): Promise<Dict[]> {
+    fetch(term: string, page?: number): Promise<Dict[]> {
         return xhrRequest({
             method: 'GET',
             url: window.__HOST + '/api/user/hint.php',
             params: {
-                q: term
+                q: term,
+                p: page,
+                ps: PAGE_SIZE
             }
-        }).then(({data}) => {
-            this.data = data;
-
-            return data;
-        });
+        }).then(({data}) => data);
     }
 
     serialize(data: any[]): SuggestItem[] {
@@ -40,34 +41,57 @@ export class UsersSuggestSource extends SuggestSource {
         });
     }
 
-    search(term: string, values: SuggestItem[]): Promise<SuggestItem[]> {
-        let items = this.findFromCache(term),
-            localSample = this.filterValues(items, values).slice(0, SAMPLE_SIZE);
+    search(term: string, values: SuggestItem[], page: number = 1): Promise<SuggestItem[]> {
+        let items = this.findFromCache(term, page),
+            localSample = this.filterValues(items, values);
+
+        this.term = term;
+        this.values = values;
+        this.page = page;
 
         // enough to display
-        if (localSample.length === SAMPLE_SIZE) {
+        if (localSample.length === PAGE_SIZE) {
+            this.data = localSample;
+
             return Promise.resolve(this.serialize(localSample));
         }
 
         // if not enough to display, try to fill with uniq data from server
-        return this.fetch(term).then((data) => {
+        return this.fetch(term, page).then((data) => {
             let filterData = this.filterValues(data, values),
                 uniqConcat = localSample.concat(filterData.filter((item) => {
                     return !localSample.find((sample) => sample[0] === item[0]);
                 }));
 
-            return this.serialize(uniqConcat.slice(0, SAMPLE_SIZE));
+            this.data = uniqConcat;
+
+            return this.serialize(uniqConcat);
         });
     }
 
-    findFromCache(term: string) {
+    hasNextPage() {
+        return this.data.length >= PAGE_SIZE;
+    }
+
+    nextPage() {
+        if (!this.hasNextPage()) {
+            return Promise.resolve([]);
+        }
+
+        return this.search(this.term, this.values, this.page + 1);
+    }
+
+    findFromCache(term: string, page: number) {
+        let offset = (page * PAGE_SIZE) - PAGE_SIZE,
+            end = offset + PAGE_SIZE;
+
         if (!term.trim()) {
-            return this.initialData;
+            return this.initialData.slice(offset, end);
         }
 
         let variants = getSearchVariants(term);
 
-        return this.initialData.filter((item) => this.searchCondition(item, variants));
+        return this.initialData.filter((item) => this.searchCondition(item, variants)).slice(offset, end);
     }
 
     searchCondition(item: any[], variants: string[]) {

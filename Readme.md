@@ -26,7 +26,9 @@ Plugin usage demonstrated in `src/demo/demo.ts` file. First of all you need to c
 - `fetch` to fetch the data, should return `Promise`
 - `serialize` to serialize fetched data if needed
 - `search` to perform search by some term, should return `Promise`
-- `highlight` to highlight some text in menu title, should return an array of string parts
+- `highlight` to highlight some text in menu title, should retur n an array of string parts
+- `hasNextPage` to understand if there might be next page in results
+- `nextPage` to fetch new chunk of data
 
 Then you need to pass an element in which select will be initialized, it should have `suggest` class and preferrably input with `suggest__input` class + div with `suggest__toggle` class to avoid delays while page loads script. Second argument is options which should contain `createSource` method which returns `SuggestSource` instance. Example of usage can be seen in `src/demo` folder.
 

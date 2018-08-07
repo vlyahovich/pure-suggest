@@ -30,9 +30,9 @@ class User
         return $stmt;
     }
 
-    public function search($term)
+    public function search($term, $page, $page_size)
     {
-        $query = "SELECT * FROM " . $this->table_name . " WHERE (LOWER(name) REGEXP ?) OR (LOWER(domain) LIKE ?) LIMIT 10;";
+        $query = "SELECT * FROM " . $this->table_name . " WHERE (LOWER(name) REGEXP ?) OR (LOWER(domain) LIKE ?) LIMIT ?, ?;";
 
         $stmt = $this->conn->prepare($query);
 
@@ -42,11 +42,19 @@ class User
 
         $variants = getSearchVariants($term);
 
-        $regexpTerm = join("|", $variants);
+        $regexp_term = join("|", $variants);
         $term = "%{$term}%";
+        $offset = ($page_size * $page) - $page_size;
 
-        $stmt->bindParam(1, $regexpTerm);
+        // empty request give all records
+        if (!strlen($regexp_term)) {
+            $regexp_term = '.';
+        }
+
+        $stmt->bindParam(1, $regexp_term);
         $stmt->bindParam(2, $term);
+        $stmt->bindParam(3, $offset, PDO::PARAM_INT);
+        $stmt->bindParam(4, $page_size, PDO::PARAM_INT);
 
         $stmt->execute();
 

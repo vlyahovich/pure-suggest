@@ -3,8 +3,7 @@ include_once dirname(__FILE__) . '/api/config/core.php';
 
 ob_start("ob_gzhandler");
 
-header("Cache-control: public");
-header("Expires: " . gmdate("D, d M Y H:i:s", time() + 60 * 60 * 24) . " GMT");
+header("Cache-control: no-cache");
 ?>
 
 <!DOCTYPE html>
@@ -15,7 +14,7 @@ header("Expires: " . gmdate("D, d M Y H:i:s", time() + 60 * 60 * 24) . " GMT");
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Suggest Demo</title>
     <link id="favicon" rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="stylesheet" href="dist/extension.css">
+    <link rel="stylesheet" href="dist/extension.css?v=2">
     <style>
         .suggest {
             width: 300px;
@@ -78,9 +77,9 @@ if ($num > 0) {
 }
 ?>;
     </script>
-    <script src="dist/polyfills.js"></script>
-    <script src="dist/extension.js"></script>
-    <script src="dist/demo.js"></script>
+    <script src="dist/polyfills.js?v=2"></script>
+    <script src="dist/extension.js?v=2"></script>
+    <script src="dist/demo.js?v=2"></script>
 </body>
 </html>
 

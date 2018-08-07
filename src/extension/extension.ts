@@ -2,6 +2,7 @@ import {SuggestItem} from './interfaces';
 import {SuggestSource} from './SuggestSource';
 import {EventEmitter} from './EventEmitter';
 import {debounce} from './util/debounce';
+import {throttle} from './util/throttle';
 import {bind} from './util/bindDecorator';
 import {KEYS} from './enums';
 
@@ -35,6 +36,8 @@ const BUBBLE = 'suggest-bubble';
 const BUBBLE_TEXT = 'suggest-bubble__text';
 const BUBBLE_CLOSE = 'suggest-bubble__close';
 const SEARCH_DEBOUNCE = 250;
+const SCROLL_THROTTLE = 200;
+const SCROLL_THRESHOLD = 1000;
 
 export class PureSuggest extends EventEmitter {
     protected el: HTMLElement;
@@ -45,6 +48,7 @@ export class PureSuggest extends EventEmitter {
     protected toggleEl?: HTMLDivElement;
     protected menuWrapEl?: HTMLDivElement;
     protected menuEl?: HTMLDivElement;
+    protected menuScrollHeight?: number;
     protected menuItems?: HTMLDivElement[];
     protected suggestItems?: SuggestItem[];
     protected bubblesEl?: HTMLDivElement;
@@ -53,6 +57,7 @@ export class PureSuggest extends EventEmitter {
     protected options: ExtensionOptions;
     protected value: SuggestItem[] = [];
     protected doDelayedSearch: () => any;
+    protected currentRequest: Promise<any> | void;
 
     constructor(el: HTMLDivElement, options: ExtensionOptions) {
         super();
@@ -76,6 +81,7 @@ export class PureSuggest extends EventEmitter {
 
         // util
         this.doDelayedSearch = debounce(this.doSearch, SEARCH_DEBOUNCE);
+        this.handleMenuScroll = throttle(this.handleMenuScroll, SCROLL_THROTTLE);
 
         // listeners
         this.el.addEventListener('mousedown', this.handleMouseDown);
@@ -187,6 +193,12 @@ export class PureSuggest extends EventEmitter {
     handleBlur() {
         this.focused = false;
 
+        // reset menu
+        if (this.menuEl) {
+            this.menuEl.scrollTop = 0;
+            this.menuEl.style.display = 'none';
+        }
+
         this.el.classList.remove(FOCUSED);
 
         // toggle input and add element visibilities for multi-select
@@ -200,10 +212,6 @@ export class PureSuggest extends EventEmitter {
             if (this.addEl) {
                 this.addEl.style.display = '';
             }
-        }
-
-        if (this.menuEl) {
-            this.menuEl.style.display = 'none';
         }
 
         this.trigger('blur');
@@ -322,6 +330,28 @@ export class PureSuggest extends EventEmitter {
     }
 
     /**
+     * Handle when menu scrolls
+     */
+    @bind
+    handleMenuScroll() {
+        if (this.currentRequest || !this.suggestSource.hasNextPage()) {
+            return;
+        }
+
+        let {scrollTop} = this.menuEl;
+
+        if (this.menuScrollHeight - scrollTop < SCROLL_THRESHOLD) {
+            this.currentRequest = this.suggestSource
+                .nextPage()
+                .then((items) => {
+                    this.addMenu(items);
+
+                    this.currentRequest = null;
+                });
+        }
+    }
+
+    /**
      * Handle close button click on bubble
      */
     @bind
@@ -407,6 +437,31 @@ export class PureSuggest extends EventEmitter {
 
             this.menuEl.appendChild(notFoundEl);
         }
+
+        this.menuScrollHeight = this.menuEl.scrollHeight;
+    }
+
+    /**
+     * Add items to existing menu
+     */
+    addMenu(items: SuggestItem[]) {
+        if (!this.menuEl) {
+            return;
+        }
+
+        let term = this.getInputValue();
+
+        this.suggestItems = this.suggestItems.concat(items);
+
+        if (items.length) {
+            let fragment = document.createDocumentFragment();
+
+            items.forEach((item) => this.createMenuItem(item, fragment, term));
+
+            this.menuEl.appendChild(fragment);
+        }
+
+        this.menuScrollHeight = this.menuEl.scrollHeight;
     }
 
     /**
@@ -428,6 +483,7 @@ export class PureSuggest extends EventEmitter {
 
             this.menuEl.addEventListener('mousedown', this.handleItemClick);
             this.menuEl.addEventListener('mousemove', this.handleItemMove);
+            this.menuEl.addEventListener('scroll', this.handleMenuScroll);
         }
     }
 
@@ -584,6 +640,7 @@ export class PureSuggest extends EventEmitter {
         if (this.menuEl) {
             this.menuEl.removeEventListener('mousedown', this.handleItemClick);
             this.menuEl.removeEventListener('mousemove', this.handleItemMove);
+            this.menuEl.removeEventListener('scroll', this.handleMenuScroll);
         }
 
         if (this.bubblesEl) {

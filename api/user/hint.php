@@ -12,8 +12,10 @@ $db = $database->getConnection();
 $user = new User($db);
 
 $term = isset($_GET["q"]) ? $_GET["q"] : "";
+$page = isset($_GET["p"]) && is_numeric($_GET["p"]) ? $_GET["p"] : 1;
+$page_size = isset($_GET["ps"]) && is_numeric($_GET["ps"]) ? $_GET["ps"] : 30;
 
-$stmt = $user->search($term);
+$stmt = $user->search($term, $page, $page_size);
 $num = $stmt->rowCount();
 
 if ($num > 0) {

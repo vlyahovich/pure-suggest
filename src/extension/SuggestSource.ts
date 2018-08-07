@@ -7,5 +7,9 @@ export abstract class SuggestSource {
 
     abstract search(term: string, values: SuggestItem[]): Promise<SuggestItem[]>;
 
+    abstract hasNextPage(): boolean;
+
+    abstract nextPage(): Promise<SuggestItem[]>;
+
     abstract highlight(str: string, term: string): string[];
 }
