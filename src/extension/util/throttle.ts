@@ -14,13 +14,13 @@ export function throttle(fn: Function, time?: number) {
         locked = true;
 
         setTimeout(() => {
+            locked = false;
+
             if (lastArgs) {
                 wrapper(...lastArgs);
 
                 lastArgs = null;
             }
-
-            locked = false;
         }, time);
     }
 }
